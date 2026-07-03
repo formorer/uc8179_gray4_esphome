@@ -1,0 +1,73 @@
+# Minimal test for the uc8179_gray4 component.
+# Draws a pre-dithered demo photo (or, commented out, 4 horizontal stripes —
+# one per gray level, mirroring the Seeed_GFX GrayLevel4 example).
+#
+# Preconfigured for: Seeed XIAO ESP32-C3 on the XIAO ePaper Driver Board with
+# the 7.5" panel (Seeed_GFX setup 502). Pins match the well-known
+# waveshare_epaper config (model 7.50inv2), except that the busy pin must NOT
+# be inverted here — the driver handles the active-low signal itself.
+#
+# For a reTerminal E1001 see example-e1001.yaml.
+
+esphome:
+  name: xiao-epaper-gray4-test
+  # update_interval: never — render once after boot instead.
+  on_boot:
+    priority: -100
+    then:
+      - component.update: eink_display
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+
+# OTA so future firmware updates work without a USB cable.
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [ uc8179_gray4 ]
+
+# 800x480, pre-dithered to exactly the 4 panel gray levels via
+# tools/dither4.py. Your own photos: python3 tools/dither4.py in.jpg images/out.png
+image:
+  - file: images/demo-photo.png
+    id: demo_photo
+    type: GRAYSCALE
+
+spi:
+  clk_pin: GPIO8
+  mosi_pin: GPIO10
+
+display:
+  - platform: uc8179_gray4
+    id: eink_display
+    cs_pin: GPIO3
+    dc_pin: GPIO5
+    reset_pin: GPIO2
+    busy_pin:
+      number: GPIO4
+      mode:
+        input: true
+        pullup: true
+    # If gray levels look wrong or washed out, try the other mode
+    # ("custom" for older panel batches, "otp" for newer ones).
+    lut_mode: otp
+    update_interval: never
+    lambda: |-
+      it.image(0, 0, id(demo_photo));
+      // Alternatively, the stripe test:
+      // it.filled_rectangle(0,   0, 800, 120, Color(0, 0, 0));        // black
+      // it.filled_rectangle(0, 120, 800, 120, Color(85, 85, 85));     // dark gray
+      // it.filled_rectangle(0, 240, 800, 120, Color(170, 170, 170));  // light gray
+      // it.filled_rectangle(0, 360, 800, 120, Color(255, 255, 255));  // white
