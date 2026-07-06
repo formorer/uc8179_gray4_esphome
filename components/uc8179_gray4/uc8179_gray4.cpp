@@ -140,15 +140,22 @@ void UC8179Gray4::start_data_() {
 void UC8179Gray4::end_data_() { this->disable(); }
 
 // UC8179 BUSY_N is active low: low = busy, high = idle. Configure the busy
-// pin without `inverted: true`.
-bool UC8179Gray4::wait_until_idle_() {
+// pin without `inverted: true` — a leftover inverted flag from a
+// waveshare_epaper config flips the polarity: waits during actual idle then
+// time out, while refreshes still complete (the panel runs them
+// autonomously), so the image looks fine despite the errors.
+bool UC8179Gray4::wait_until_idle_(const char *phase) {
   if (this->busy_pin_->digital_read())
     return true;
 
   const uint32_t start = millis();
   while (!this->busy_pin_->digital_read()) {
     if (millis() - start > IDLE_TIMEOUT_MS) {
-      ESP_LOGE(TAG, "Timeout while waiting for the display to become idle");
+      ESP_LOGE(TAG,
+               "Timeout while waiting for the display to become idle (%s). If "
+               "the image still renders fine, the busy pin is most likely "
+               "configured with 'inverted: true' - remove that flag.",
+               phase);
       return false;
     }
     App.feed_wdt();
@@ -162,13 +169,13 @@ void UC8179Gray4::reset_() {
   delay(this->reset_duration_);  // NOLINT
   this->reset_pin_->digital_write(true);
   delay(10);
-  this->wait_until_idle_();
+  this->wait_until_idle_("after reset");
 }
 
 // --- grayscale init (ported from Seeed_GFX EPD_INIT_GRAY) --------------------
 
 void UC8179Gray4::write_lut_bank_(uint8_t cmd, const uint8_t *lut) {
-  this->wait_until_idle_();
+  this->wait_until_idle_("before LUT upload");
   this->command(cmd);
   this->start_data_();
   this->write_array(lut, 42);
@@ -197,7 +204,7 @@ void UC8179Gray4::init_gray_custom_lut_() {
 
   this->command(0x04);  // POWER ON
   delay(100);           // NOLINT
-  this->wait_until_idle_();
+  this->wait_until_idle_("after power on");
 
   this->command(0x00);  // PANEL SETTING: KW mode, LUT from registers
   this->data(0x3F);
@@ -240,7 +247,7 @@ void UC8179Gray4::init_gray_otp_() {
 
   this->command(0x04);  // POWER ON
   delay(100);           // NOLINT
-  this->wait_until_idle_();
+  this->wait_until_idle_("after power on");
 
   this->command(0x00);  // PANEL SETTING: KW mode, LUT from OTP
   this->data(0x1F);
@@ -300,7 +307,7 @@ void UC8179Gray4::write_plane_(uint8_t cmd, uint8_t bit_index) {
 bool UC8179Gray4::refresh_() {
   this->command(0x12);  // DISPLAY REFRESH
   delay(1);             // per vendor code: at least 200 us before polling busy
-  if (!this->wait_until_idle_()) {
+  if (!this->wait_until_idle_("during refresh")) {
     this->status_set_warning();
     return false;
   }
@@ -329,7 +336,7 @@ void UC8179Gray4::deep_sleep_() {
   this->command(0x50);  // border floating
   this->data(0xF7);
   this->command(0x02);  // POWER OFF
-  if (!this->wait_until_idle_())
+  if (!this->wait_until_idle_("after power off"))
     return;
   this->command(0x07);  // DEEP SLEEP
   this->data(0xA5);

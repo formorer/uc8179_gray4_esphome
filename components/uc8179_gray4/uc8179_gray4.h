@@ -79,7 +79,7 @@ class UC8179Gray4
   void start_data_();
   void end_data_();
 
-  bool wait_until_idle_();
+  bool wait_until_idle_(const char *phase);
   void reset_();
 
   void display_();
