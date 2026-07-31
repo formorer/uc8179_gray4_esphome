@@ -169,6 +169,7 @@ void UC8179Gray4::reset_() {
   delay(this->reset_duration_);  // NOLINT
   this->reset_pin_->digital_write(true);
   delay(10);
+  this->panel_asleep_ = false;
   this->wait_until_idle_("after reset");
 }
 
@@ -333,6 +334,9 @@ void UC8179Gray4::display_() {
 }
 
 void UC8179Gray4::deep_sleep_() {
+  if (this->panel_asleep_)
+    return;
+
   this->command(0x50);  // border floating
   this->data(0xF7);
   this->command(0x02);  // POWER OFF
@@ -340,6 +344,7 @@ void UC8179Gray4::deep_sleep_() {
     return;
   this->command(0x07);  // DEEP SLEEP
   this->data(0xA5);
+  this->panel_asleep_ = true;
 }
 
 void UC8179Gray4::dump_config() {
