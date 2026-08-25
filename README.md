@@ -92,6 +92,13 @@ Pick it via config instead:
 
 **If gray levels look wrong, inverted, or washed out, try the other mode.**
 
+A cleanly inverted image — a photographic negative, white text on black —
+is the specific signature of `otp` on a panel whose OTP has no grayscale
+waveform: the panel falls back to a plain black/white waveform with the
+opposite data polarity. Switch to `custom` and it renders correctly. Since
+`custom` uploads the LUTs explicitly and does not depend on the panel's OTP
+contents, it is the safer default when you cannot test the panel first.
+
 Field test (2026-07, XIAO ePaper Driver Board, UC8179 panel batch): both
 modes render clean 4-level output; `otp` has slightly better contrast
 (deeper black) and is the recommendation on this device.
