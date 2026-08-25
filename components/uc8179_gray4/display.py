@@ -6,6 +6,7 @@ from esphome.const import (
     CONF_BUSY_PIN,
     CONF_DC_PIN,
     CONF_ID,
+    CONF_INVERT_COLORS,
     CONF_LAMBDA,
     CONF_PAGES,
     CONF_RESET_DURATION,
@@ -37,6 +38,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_LUT_MODE, default="custom"): cv.enum(
                 LUT_MODES, lower=True
             ),
+            cv.Optional(CONF_INVERT_COLORS, default=False): cv.boolean,
             cv.Optional(CONF_RESET_DURATION): cv.All(
                 cv.positive_time_period_milliseconds,
                 cv.Range(max=core.TimePeriod(milliseconds=500)),
@@ -67,6 +69,7 @@ async def to_code(config):
     cg.add(var.set_busy_pin(busy))
 
     cg.add(var.set_lut_mode(config[CONF_LUT_MODE]))
+    cg.add(var.set_invert_colors(config[CONF_INVERT_COLORS]))
 
     if CONF_LAMBDA in config:
         lambda_ = await cg.process_lambda(

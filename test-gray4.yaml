@@ -63,6 +63,7 @@ display:
     # If gray levels look wrong or washed out, try the other mode
     # ("custom" for older panel batches, "otp" for newer ones).
     lut_mode: otp
+    invert_colors: false
     update_interval: never
     lambda: |-
       it.image(0, 0, id(demo_photo));

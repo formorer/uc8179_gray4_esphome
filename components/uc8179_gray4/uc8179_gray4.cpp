@@ -297,7 +297,9 @@ void UC8179Gray4::write_plane_(uint8_t cmd, uint8_t bit_index) {
       out |= (((b1 >> (4 + bit_index)) & 0x01) << 2);
       out |= (((b1 >> (2 + bit_index)) & 0x01) << 1);
       out |= (((b1 >> (0 + bit_index)) & 0x01) << 0);
-      line[j] = out;
+      // Complementing both planes maps every level v to 3 - v, i.e. a full
+      // negative, which cancels a panel that inverts the data polarity.
+      line[j] = this->invert_colors_ ? static_cast<uint8_t>(~out) : out;
     }
     this->write_array(line, BYTES_PER_LINE);
     App.feed_wdt();
@@ -352,6 +354,7 @@ void UC8179Gray4::dump_config() {
   ESP_LOGCONFIG(TAG, "  Panel: GDEY075T7 800x480 (reTerminal E1001)");
   ESP_LOGCONFIG(TAG, "  LUT mode: %s",
                 this->lut_mode_ == LUT_MODE_OTP ? "otp" : "custom");
+  ESP_LOGCONFIG(TAG, "  Invert colors: %s", YESNO(this->invert_colors_));
   LOG_PIN("  CS Pin: ", this->cs_);
   LOG_PIN("  Reset Pin: ", this->reset_pin_);
   LOG_PIN("  DC Pin: ", this->dc_pin_);

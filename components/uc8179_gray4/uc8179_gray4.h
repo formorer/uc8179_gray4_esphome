@@ -51,6 +51,7 @@ class UC8179Gray4
     this->reset_duration_ = reset_duration;
   }
   void set_lut_mode(LutMode mode) { this->lut_mode_ = mode; }
+  void set_invert_colors(bool invert) { this->invert_colors_ = invert; }
 
   float get_setup_priority() const override;
 
@@ -97,6 +98,11 @@ class UC8179Gray4
   GPIOPin *busy_pin_{nullptr};
   uint32_t reset_duration_{10};
   LutMode lut_mode_{LUT_MODE_CUSTOM};
+  // Some panels drive the two data planes with the opposite polarity and
+  // render everything as a photographic negative. Complementing both planes
+  // cancels that out. It is a property of the panel, so it belongs here
+  // rather than in whatever generates the image.
+  bool invert_colors_{false};
   // A panel in deep sleep holds BUSY low, so a second sleep sequence would
   // stall in wait_until_idle_ until the timeout. Track the state and skip it
   // (matters on battery devices, where on_safe_shutdown runs right after the

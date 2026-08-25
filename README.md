@@ -90,14 +90,27 @@ Pick it via config instead:
   (original/older panels).
 - `otp`: uses the panel-internal OTP waveform (newer batches).
 
-**If gray levels look wrong, inverted, or washed out, try the other mode.**
+**If gray levels look washed out or the shades come out in the wrong order,
+try the other mode.** A fully inverted image is a different problem — see
+`invert_colors` below.
 
-A cleanly inverted image — a photographic negative, white text on black —
-is the specific signature of `otp` on a panel whose OTP has no grayscale
-waveform: the panel falls back to a plain black/white waveform with the
-opposite data polarity. Switch to `custom` and it renders correctly. Since
-`custom` uploads the LUTs explicitly and does not depend on the panel's OTP
-contents, it is the safer default when you cannot test the panel first.
+## `invert_colors`
+
+Some panels drive the two data planes with the opposite polarity and render
+everything as a photographic negative: white text on a black page. Set
+
+```yaml
+    invert_colors: true
+```
+
+and the driver complements both planes, mapping every level `v` to `3 - v`,
+which cancels the panel out. Observed on a reTerminal E1001 whose panel
+inverts in **both** `lut_mode` settings — so if switching `lut_mode` changes
+nothing, this is the knob you want.
+
+Fix it here rather than by inverting whatever generates the image: the
+polarity is a property of the individual panel, so a server-side or
+image-side workaround inverts it for every other device too.
 
 Field test (2026-07, XIAO ePaper Driver Board, UC8179 panel batch): both
 modes render clean 4-level output; `otp` has slightly better contrast
